@@ -9,7 +9,15 @@ const pathSchema = z
 
 const summarySchema = z.string().max(280, 'summary must be ≤ 280 characters');
 
-const linksSchema = z.record(z.string(), z.string().url()).default({});
+const linksSchema = z
+  .record(
+    z.string(),
+    z
+      .string()
+      .url()
+      .refine((u) => /^https?:\/\//i.test(u), 'link URLs must use http or https'),
+  )
+  .default({});
 const metadataSchema = z.record(z.string(), z.unknown()).default({});
 
 export const upsertProjectInputSchema = z.object({
@@ -37,7 +45,7 @@ export type SetStatusInput = z.infer<typeof setStatusInputSchema>;
 
 export const setNextStepInputSchema = z.object({
   path: pathSchema,
-  next_step: z.string(),
+  next_step: z.string().min(1, 'next_step must not be empty'),
   actor: actorSchema,
 });
 export type SetNextStepInput = z.infer<typeof setNextStepInputSchema>;
@@ -53,6 +61,8 @@ export type PatchFlagsInput = z.infer<typeof patchFlagsInputSchema>;
 // Embedding column is vector(1536); represented in JSON as a number[] of length 1536 or null
 const embeddingSchema = z.array(z.number()).length(1536).nullable();
 
+// TODO: timestamps are z.string() — tighten to z.string().datetime() (or z.date())
+// once Drizzle's pg timestamptz output shape is confirmed in packages/db.
 export const projectSchema = z.object({
   id: z.string().uuid(),
   path: z.string(),

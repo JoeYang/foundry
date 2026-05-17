@@ -69,6 +69,42 @@ describe('upsertProjectInputSchema', () => {
     ).toThrow();
   });
 
+  it('rejects links with javascript: scheme', () => {
+    expect(() =>
+      upsertProjectInputSchema.parse({
+        path: '/x',
+        name: 'x',
+        summary: 'y',
+        actor: 'agent:claude',
+        links: { docs: 'javascript:alert(1)' },
+      }),
+    ).toThrow();
+  });
+
+  it('rejects links with data: scheme', () => {
+    expect(() =>
+      upsertProjectInputSchema.parse({
+        path: '/x',
+        name: 'x',
+        summary: 'y',
+        actor: 'agent:claude',
+        links: { docs: 'data:text/html,<script>' },
+      }),
+    ).toThrow();
+  });
+
+  it('accepts links with https: scheme', () => {
+    expect(
+      upsertProjectInputSchema.parse({
+        path: '/x',
+        name: 'x',
+        summary: 'y',
+        actor: 'agent:claude',
+        links: { repo: 'https://github.com/x/y' },
+      }),
+    ).toBeDefined();
+  });
+
   it('accepts optional fields', () => {
     const parsed = upsertProjectInputSchema.parse({
       path: '/x',
@@ -111,6 +147,12 @@ describe('setNextStepInputSchema', () => {
     ).toBeDefined();
     expect(() => setNextStepInputSchema.parse({ path: '/x', actor: 'agent:c' })).toThrow();
   });
+
+  it('rejects empty next_step', () => {
+    expect(() =>
+      setNextStepInputSchema.parse({ path: '/x', next_step: '', actor: 'agent:c' }),
+    ).toThrow();
+  });
 });
 
 describe('patchFlagsInputSchema', () => {
@@ -121,6 +163,11 @@ describe('patchFlagsInputSchema', () => {
   });
   it('accepts empty object (no-op)', () => {
     expect(patchFlagsInputSchema.parse({})).toEqual({});
+  });
+
+  it('rejects non-boolean for boolean flags', () => {
+    expect(() => patchFlagsInputSchema.parse({ pinned: 'yes' })).toThrow();
+    expect(() => patchFlagsInputSchema.parse({ archived: 1 })).toThrow();
   });
 });
 
