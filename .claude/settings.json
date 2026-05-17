@@ -1,0 +1,62 @@
+{
+  "permissions": {
+    "allow": [
+      "npm *",
+      "npx *",
+      "node *",
+      "tsx *",
+      "git *",
+      "docker compose *",
+      "docker ps",
+      "docker logs *",
+      "psql *",
+      "drizzle-kit *"
+    ],
+    "deny": [
+      "rm -rf",
+      "rm -rf /",
+      "cat .env",
+      "cat .env.*",
+      "echo * > .env",
+      "git push --force",
+      "git push -f",
+      "git push * main",
+      "git push * master"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "FILE=$(echo $CLAUDE_TOOL_INPUT | jq -r '.file_path // .filePath // empty') && [ -n \"$FILE\" ] && case \"$FILE\" in *.ts|*.tsx|*.js|*.jsx|*.json|*.md) npx prettier --write \"$FILE\" 2>/dev/null;; esac; exit 0",
+            "timeout": 10000
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null); if [ \"$BRANCH\" = \"main\" ] || [ \"$BRANCH\" = \"master\" ]; then echo \"Direct edits on $BRANCH are blocked. Create a feature branch.\" >&2; exit 2; fi; exit 0"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if git diff --quiet HEAD 2>/dev/null && git diff --cached --quiet 2>/dev/null; then exit 0; fi; echo 'Uncommitted changes detected. Review with git diff.' >&2; exit 0"
+          }
+        ]
+      }
+    ]
+  }
+}

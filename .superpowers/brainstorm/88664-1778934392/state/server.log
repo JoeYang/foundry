@@ -1,0 +1,7 @@
+{"type":"server-started","port":55632,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:55632","screen_dir":"/home/joeyang/dev-tools/foundry/.superpowers/brainstorm/88664-1778934392/content","state_dir":"/home/joeyang/dev-tools/foundry/.superpowers/brainstorm/88664-1778934392/state"}
+{"type":"screen-added","file":"/home/joeyang/dev-tools/foundry/.superpowers/brainstorm/88664-1778934392/content/waiting.html"}
+{"type":"screen-added","file":"/home/joeyang/dev-tools/foundry/.superpowers/brainstorm/88664-1778934392/content/dashboard-layouts.html"}
+{"type":"screen-added","file":"/home/joeyang/dev-tools/foundry/.superpowers/brainstorm/88664-1778934392/content/dashboard-axiom-v1.html"}
+{"type":"screen-added","file":"/home/joeyang/dev-tools/foundry/.superpowers/brainstorm/88664-1778934392/content/waiting-design.html"}
+{"type":"screen-added","file":"/home/joeyang/dev-tools/foundry/.superpowers/brainstorm/88664-1778934392/content/detail-axiom-v1.html"}
+{"type":"server-stopped","reason":"idle timeout"}
