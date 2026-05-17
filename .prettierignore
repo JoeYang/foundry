@@ -1,0 +1,9 @@
+node_modules/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+.superpowers/
+.claude/
+docs/
+package-lock.json
