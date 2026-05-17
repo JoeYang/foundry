@@ -1,9 +1,10 @@
 import { Routes, Route } from 'react-router-dom';
+import { DashboardPage } from './pages/DashboardPage.js';
 
 export function App() {
   return (
     <Routes>
-      <Route path="/" element={<div style={{ padding: 32 }}>foundry dashboard (Plan 3 scaffold)</div>} />
+      <Route path="/" element={<DashboardPage />} />
     </Routes>
   );
 }
