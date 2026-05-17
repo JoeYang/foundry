@@ -12,6 +12,7 @@ import { agentRoutes } from './routes/agent/index.js';
 import { dashboardRoutes } from './routes/dashboard/index.js';
 import { requestIdPlugin } from './middleware/request-id.js';
 import { errorHandlerPlugin } from './middleware/error-handler.js';
+import { mcpPlugin } from '@foundry/mcp';
 
 export interface ServerDeps {
   config: Config;
@@ -38,6 +39,7 @@ export async function buildServer(config: Config, dbOverride?: DbClient): Promis
   app.register(healthRoutes, { prefix: '/v1' });
   await app.register(agentRoutes, { prefix: '/v1/agent' });
   await app.register(dashboardRoutes, { prefix: '/v1' });
+  await app.register(mcpPlugin, { prefix: '/mcp' });
 
   app.addHook('onClose', async () => {
     await db.close();
