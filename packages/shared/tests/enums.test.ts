@@ -26,6 +26,8 @@ describe('todoStatusSchema', () => {
   });
   it('rejects unknown values', () => {
     expect(() => todoStatusSchema.parse('todo')).toThrow();
+    expect(() => todoStatusSchema.parse('')).toThrow();
+    expect(() => todoStatusSchema.parse(null)).toThrow();
   });
 });
 
@@ -35,6 +37,8 @@ describe('projectEventKindSchema', () => {
   });
   it('rejects unknown kinds', () => {
     expect(() => projectEventKindSchema.parse('todo_added')).toThrow();
+    expect(() => projectEventKindSchema.parse('')).toThrow();
+    expect(() => projectEventKindSchema.parse(null)).toThrow();
   });
 });
 
