@@ -1,11 +1,6 @@
 import { z } from 'zod';
 import { projectStatusSchema, actorSchema } from './enums.js';
-
-// Path: non-empty, no null bytes (Postgres text columns reject \x00)
-const pathSchema = z
-  .string()
-  .min(1, 'path required')
-  .refine((s) => !s.includes('\x00'), 'path must not contain null bytes');
+import { pathSchema } from './common.js';
 
 const summarySchema = z.string().max(280, 'summary must be ≤ 280 characters');
 

@@ -17,6 +17,11 @@ describe('addNoteInputSchema', () => {
       addNoteInputSchema.parse({ path: '/x', body: 'b', author: 'bob' }),
     ).toThrow();
   });
+  it('rejects path with null bytes', () => {
+    expect(() =>
+      addNoteInputSchema.parse({ path: '/foo\x00bar', body: 'b', author: 'agent:c' }),
+    ).toThrow();
+  });
 });
 
 describe('noteSchema', () => {

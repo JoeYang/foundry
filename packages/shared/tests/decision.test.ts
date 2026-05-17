@@ -73,6 +73,16 @@ describe('addDecisionInputSchema', () => {
       }),
     ).toBeDefined();
   });
+  it('rejects path with null bytes', () => {
+    expect(() =>
+      addDecisionInputSchema.parse({
+        path: '/foo\x00bar',
+        title: 't',
+        rationale: 'r',
+        actor: 'agent:c',
+      }),
+    ).toThrow();
+  });
 });
 
 describe('supersedeDecisionInputSchema', () => {

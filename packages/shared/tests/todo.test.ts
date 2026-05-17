@@ -16,6 +16,11 @@ describe('addTodoInputSchema', () => {
       addTodoInputSchema.parse({ path: '/x', text: '', actor: 'agent:c' }),
     ).toThrow();
   });
+  it('rejects path with null bytes', () => {
+    expect(() =>
+      addTodoInputSchema.parse({ path: '/foo\x00bar', text: 'do thing', actor: 'agent:c' }),
+    ).toThrow();
+  });
 });
 
 describe('updateTodoInputSchema', () => {

@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import { actorSchema, todoStatusSchema } from './enums.js';
-
-const pathSchema = z.string().min(1);
+import { pathSchema } from './common.js';
 
 export const addTodoInputSchema = z.object({
   path: pathSchema,

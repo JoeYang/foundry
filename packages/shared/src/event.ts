@@ -18,9 +18,9 @@ export const eventPayloadSchemas = {
     to: projectStatusSchema,
     note: z.string().nullable().optional(),
   }),
-  next_step_changed: fromToString.extend({ from: z.string().nullable() }),
-  summary_changed: fromToString.extend({ from: z.string().nullable() }),
-  goal_changed: fromToString.extend({ from: z.string().nullable() }),
+  next_step_changed: fromToString,
+  summary_changed: fromToString,
+  goal_changed: fromToString,
   links_changed: fromToRecord,
   tech_stack_changed: fromToStringArray,
   human_flag_changed: z.object({
