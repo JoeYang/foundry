@@ -17,7 +17,86 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+      start_period: 10s
+    networks:
+      - foundry-net
+
+  api:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    image: foundry-api:latest
+    container_name: foundry-api
+    restart: unless-stopped
+    environment:
+      DB_URL_MIGRATE: postgres://foundry:foundry@postgres:5432/foundry
+      DB_URL_APP: postgres://foundry_app:foundry_app@postgres:5432/foundry
+      FOUNDRY_HEARTBEAT_TTL_SEC: 1800
+      LOG_LEVEL: info
+      HOST: 0.0.0.0
+      PORT: 5380
+    ports:
+      - '5380:5380'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', "node -e \"fetch('http://localhost:5380/v1/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    networks:
+      - foundry-net
+
+  web:
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+    image: foundry-web:latest
+    container_name: foundry-web
+    restart: unless-stopped
+    ports:
+      - '5173:80'
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q --spider http://localhost/ || exit 1']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - foundry-net
+
+  backup:
+    image: docker.io/prodrigestivill/postgres-backup-local:16
+    container_name: foundry-backup
+    restart: unless-stopped
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: foundry
+      POSTGRES_USER: foundry
+      POSTGRES_PASSWORD: foundry
+      POSTGRES_EXTRA_OPTS: '--blobs --no-owner --quote-all-identifiers'
+      SCHEDULE: '@daily'
+      BACKUP_KEEP_DAYS: 7
+      BACKUP_KEEP_WEEKS: 4
+      BACKUP_KEEP_MONTHS: 6
+      HEALTHCHECK_PORT: 8080
+    volumes:
+      - ${FOUNDRY_BACKUP_DIR:-/home/joeyang/foundry-backups}:/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - foundry-net
 
 volumes:
   foundry-pgdata:
     name: foundry-pgdata
+
+networks:
+  foundry-net:
+    name: foundry-net
+    driver: bridge
