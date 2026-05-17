@@ -1,0 +1,14 @@
+node_modules
+**/node_modules
+dist
+build
+*.tsbuildinfo
+coverage
+.env
+.env.*
+.git
+.superpowers
+docs
+.claude
+test-results
+playwright-report
