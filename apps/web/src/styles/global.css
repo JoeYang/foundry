@@ -1,0 +1,8 @@
+@import './axiom-tokens.css';
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+body { margin: 0; background: var(--paper-50); color: var(--ink-900); font-family: var(--font-sans, system-ui), sans-serif; }
+a { color: var(--accent-600); text-decoration: none; }
+a:hover { text-decoration: underline; }
+button { font-family: inherit; cursor: pointer; }
