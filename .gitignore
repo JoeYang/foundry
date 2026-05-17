@@ -1,0 +1,30 @@
+# Node
+node_modules/
+*.log
+npm-debug.log*
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Coverage
+coverage/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Brainstorming companion (transient mockups)
+.superpowers/
+
+# Docker volumes (named, but in case bind mount is used)
+docker/data/
