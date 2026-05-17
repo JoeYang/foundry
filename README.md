@@ -20,11 +20,11 @@ docker compose -f docker/docker-compose.yml up -d
 
 ## Commands
 
-| Action | Command |
-|---|---|
-| Test all | `npm test` |
-| Lint | `npm run lint` |
-| Format | `npm run format` |
+| Action      | Command                                             |
+| ----------- | --------------------------------------------------- |
+| Test all    | `npm test`                                          |
+| Lint        | `npm run lint`                                      |
+| Format      | `npm run format`                                    |
 | Postgres up | `docker compose -f docker/docker-compose.yml up -d` |
 
 See `docs/superpowers/specs/2026-05-16-foundry-design.md` for the full design.
