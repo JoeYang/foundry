@@ -8,6 +8,8 @@ import { createDbClient, type DbClient } from '@foundry/db';
 import { LiveTracker } from './services/live-tracker.js';
 import { type Config } from './config.js';
 import { healthRoutes } from './routes/health.js';
+import { requestIdPlugin } from './middleware/request-id.js';
+import { errorHandlerPlugin } from './middleware/error-handler.js';
 
 export interface ServerDeps {
   config: Config;
@@ -25,6 +27,9 @@ export async function buildServer(config: Config, dbOverride?: DbClient): Promis
 
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
+
+  await app.register(requestIdPlugin);
+  await app.register(errorHandlerPlugin);
 
   app.decorate('deps', { config, db, liveTracker } as ServerDeps);
 

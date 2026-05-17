@@ -12,11 +12,12 @@
     "start": "node --import tsx src/boot.ts"
   },
   "dependencies": {
-    "@foundry/shared": "*",
     "@foundry/db": "*",
-    "fastify": "^5.0.0",
-    "fastify-type-provider-zod": "^4.0.0",
+    "@foundry/shared": "*",
     "dotenv": "^16.4.0",
+    "fastify": "^5.0.0",
+    "fastify-plugin": "^5.1.0",
+    "fastify-type-provider-zod": "^4.0.0",
     "pg": "^8.13.0",
     "zod": "^3.23.0"
   },
