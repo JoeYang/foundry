@@ -1,0 +1,182 @@
+#!/usr/bin/env bash
+# foundry — one-stop ops CLI for the containerized stack.
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+COMPOSE_FILE="$REPO_ROOT/docker/docker-compose.yml"
+BACKUP_DIR="${FOUNDRY_BACKUP_DIR:-$HOME/foundry-backups}"
+
+# Auto-detect compose tool — podman compose (with podman-compose installed) preferred,
+# falls back to docker compose
+detect_compose() {
+  if command -v podman-compose >/dev/null 2>&1; then
+    echo "podman-compose"
+  elif command -v podman >/dev/null 2>&1 && podman compose --help >/dev/null 2>&1; then
+    echo "podman compose"
+  elif command -v docker >/dev/null 2>&1; then
+    echo "docker compose"
+  else
+    echo "no compose tool found (install podman-compose: sudo apt install podman-compose)" >&2
+    exit 1
+  fi
+}
+COMPOSE=$(detect_compose)
+
+usage() {
+  cat <<EOF
+foundry — ops CLI for the containerized stack
+
+USAGE
+  scripts/foundry <command> [args]
+
+COMMANDS
+  up                Start all containers (build if needed)
+  down              Stop and remove all containers
+  restart           Stop, rebuild, and start all containers
+  build             Build api and web images
+  rebuild           Force-rebuild without cache
+  logs [service]    Tail logs (all services if no arg)
+  status            Show container status + healthchecks
+  ps                Alias for status
+  backup            Trigger an immediate backup (writes to FOUNDRY_BACKUP_DIR)
+  list-backups      List backup files in FOUNDRY_BACKUP_DIR
+  restore <file>    Restore from a backup file (DESTRUCTIVE — confirms first)
+  shell [service]   Open a shell in a container (defaults to api)
+  psql              Open psql against the postgres container as the superuser
+  help              Show this message
+
+ENVIRONMENT
+  FOUNDRY_BACKUP_DIR  Where backups are stored on the host (default: ~/foundry-backups)
+EOF
+}
+
+cmd_up() {
+  mkdir -p "$BACKUP_DIR"
+  echo "==> Bringing up foundry stack (compose: $COMPOSE)"
+  $COMPOSE -f "$COMPOSE_FILE" up -d
+  echo
+  cmd_status
+}
+
+cmd_down() {
+  $COMPOSE -f "$COMPOSE_FILE" down
+}
+
+cmd_restart() {
+  echo "==> Restarting foundry stack"
+  $COMPOSE -f "$COMPOSE_FILE" down
+  cmd_build
+  cmd_up
+}
+
+cmd_build() {
+  echo "==> Building images"
+  $COMPOSE -f "$COMPOSE_FILE" build
+}
+
+cmd_rebuild() {
+  echo "==> Rebuilding images without cache"
+  $COMPOSE -f "$COMPOSE_FILE" build --no-cache
+}
+
+cmd_logs() {
+  local svc="${1:-}"
+  if [ -n "$svc" ]; then
+    $COMPOSE -f "$COMPOSE_FILE" logs -f --tail=100 "$svc"
+  else
+    $COMPOSE -f "$COMPOSE_FILE" logs -f --tail=50
+  fi
+}
+
+cmd_status() {
+  $COMPOSE -f "$COMPOSE_FILE" ps
+  echo
+  echo "==> Healthchecks"
+  for c in foundry-postgres foundry-api foundry-web foundry-backup; do
+    status=$(podman inspect --format '{{.State.Health.Status}}' "$c" 2>/dev/null || echo "not-running")
+    printf "  %-20s %s\n" "$c" "$status"
+  done
+}
+
+cmd_backup() {
+  echo "==> Triggering immediate backup"
+  podman exec foundry-backup /backup.sh
+  echo "==> Latest backup files:"
+  ls -lt "$BACKUP_DIR/daily" 2>/dev/null | head -5
+}
+
+cmd_list_backups() {
+  echo "==> Backup directory: $BACKUP_DIR"
+  for sub in daily weekly monthly last; do
+    if [ -d "$BACKUP_DIR/$sub" ]; then
+      echo
+      echo "--- $sub ---"
+      ls -lh "$BACKUP_DIR/$sub" 2>/dev/null || true
+    fi
+  done
+}
+
+cmd_restore() {
+  local file="${1:-}"
+  if [ -z "$file" ]; then
+    echo "USAGE: scripts/foundry restore <backup-file>" >&2
+    echo "(use 'scripts/foundry list-backups' to find candidates)" >&2
+    exit 1
+  fi
+  if [ ! -f "$file" ]; then
+    echo "ERROR: backup file not found: $file" >&2
+    exit 1
+  fi
+  echo "WARNING: This will DROP and recreate the foundry database from $file"
+  read -p "Type 'restore' to confirm: " confirm
+  if [ "$confirm" != "restore" ]; then
+    echo "aborted"
+    exit 1
+  fi
+  echo "==> Stopping api + web to free DB connections"
+  $COMPOSE -f "$COMPOSE_FILE" stop api web
+  echo "==> Dropping and recreating database"
+  podman exec foundry-postgres psql -U foundry -d postgres -c "DROP DATABASE IF EXISTS foundry;"
+  podman exec foundry-postgres psql -U foundry -d postgres -c "CREATE DATABASE foundry OWNER foundry;"
+  echo "==> Restoring from $file"
+  if [[ "$file" == *.gz ]]; then
+    gunzip -c "$file" | podman exec -i foundry-postgres psql -U foundry -d foundry
+  else
+    cat "$file" | podman exec -i foundry-postgres psql -U foundry -d foundry
+  fi
+  echo "==> Restarting api + web"
+  $COMPOSE -f "$COMPOSE_FILE" start api web
+  cmd_status
+}
+
+cmd_shell() {
+  local svc="${1:-api}"
+  podman exec -it "foundry-$svc" /bin/sh
+}
+
+cmd_psql() {
+  podman exec -it foundry-postgres psql -U foundry -d foundry
+}
+
+main() {
+  local cmd="${1:-help}"
+  shift || true
+  case "$cmd" in
+    up)            cmd_up "$@" ;;
+    down)          cmd_down "$@" ;;
+    restart)       cmd_restart "$@" ;;
+    build)         cmd_build "$@" ;;
+    rebuild)       cmd_rebuild "$@" ;;
+    logs)          cmd_logs "$@" ;;
+    status|ps)     cmd_status "$@" ;;
+    backup)        cmd_backup "$@" ;;
+    list-backups)  cmd_list_backups "$@" ;;
+    restore)       cmd_restore "$@" ;;
+    shell)         cmd_shell "$@" ;;
+    psql)          cmd_psql "$@" ;;
+    help|--help|-h) usage ;;
+    *)             echo "unknown command: $cmd" >&2; usage; exit 1 ;;
+  esac
+}
+
+main "$@"
