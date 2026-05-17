@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import fp from 'fastify-plugin';
 import { ZodError } from 'zod';
+import { hasZodFastifySchemaValidationErrors } from 'fastify-type-provider-zod';
 import { AppError } from '../errors.js';
 
 async function errorHandlerPluginImpl(app: FastifyInstance) {
@@ -9,6 +10,17 @@ async function errorHandlerPluginImpl(app: FastifyInstance) {
 
     if (err instanceof ZodError) {
       const message = err.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
+      return reply.status(400).send({
+        error: 'VALIDATION_FAILED',
+        message,
+        request_id: requestId,
+      });
+    }
+
+    if (hasZodFastifySchemaValidationErrors(err)) {
+      const message = err.validation
+        .map((v) => `${v.instancePath}: ${v.message}`)
+        .join('; ');
       return reply.status(400).send({
         error: 'VALIDATION_FAILED',
         message,
