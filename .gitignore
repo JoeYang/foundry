@@ -28,3 +28,9 @@ coverage/
 
 # Docker volumes (named, but in case bind mount is used)
 docker/data/
+
+# Playwright artifacts
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
