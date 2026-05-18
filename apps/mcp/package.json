@@ -14,7 +14,9 @@
     "@foundry/shared": "*",
     "@foundry/db": "*",
     "@foundry/api": "*",
-    "zod": "^3.23.0"
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.23.0",
+    "zod-to-json-schema": "^3.23.0"
   },
   "devDependencies": {
     "typescript": "^5.6.0",
